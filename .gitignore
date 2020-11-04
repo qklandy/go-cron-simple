@@ -1,0 +1,8 @@
+# dir
+/tpl-*
+
+# file
+*.gz
+
+# common
+!.gitkeep
