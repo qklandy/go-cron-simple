@@ -160,6 +160,7 @@ func runShell(cmdStr, cmdStrMd5 string) {
 		fp.Close()
 	}
 	defer func() {
+		log.Println("删除锁文件:【" + cmdStr + "】:【" + fileMutex + "】")
 		_ = os.Remove(fileMutex)
 	}()
 
@@ -187,16 +188,8 @@ func runShell(cmdStr, cmdStrMd5 string) {
 		return
 	}
 
-	tmpChannel := make(chan int)
-
 	go func() {
 		for {
-			select {
-			case <-tmpChannel:
-				break
-			default:
-
-			}
 			bufReader := bufio.NewReader(stderr)
 			bytesErr, err := bufReader.ReadString('\n')
 			if err != nil {
@@ -225,16 +218,11 @@ func runShell(cmdStr, cmdStrMd5 string) {
 	}()
 
 	go func() {
-
 		for {
-			select {
-			case <-tmpChannel:
-				break
-			default:
-
-			}
+			// 2k
+			bytes := make([]byte, 1024*2)
 			bufReader := bufio.NewReader(stdout)
-			bytes, err := bufReader.ReadString('\n')
+			_, err := bufReader.Read(bytes)
 			if err != nil {
 
 				if err == io.EOF {
@@ -254,7 +242,6 @@ func runShell(cmdStr, cmdStrMd5 string) {
 			log.Printf(cmdStrMd5+" - stdout: %s", bytes)
 			time.Sleep(time.Millisecond * 100)
 		}
-
 	}()
 
 	if err := cmd.Wait(); err != nil {
@@ -262,7 +249,7 @@ func runShell(cmdStr, cmdStrMd5 string) {
 		return
 	}
 
-	tmpChannel <- 1
+	log.Println(cmdStrMd5 + " - finish!")
 }
 
 func md5V(str string) string {
